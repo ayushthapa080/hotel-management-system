@@ -1,0 +1,61 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15
+    container_name: hotel_management_db
+    environment:
+      POSTGRES_DB: hotel_management
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - hotel_network
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: hotel_management_api
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: hotel_management
+      DB_USER: postgres
+      DB_PASSWORD: password
+      NODE_ENV: development
+      PORT: 5000
+    ports:
+      - "5000:5000"
+    depends_on:
+      - postgres
+    networks:
+      - hotel_network
+    volumes:
+      - ./backend:/app
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: hotel_management_ui
+    environment:
+      REACT_APP_API_URL: http://localhost:5000/api
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    networks:
+      - hotel_network
+    volumes:
+      - ./frontend:/app
+
+volumes:
+  postgres_data:
+
+networks:
+  hotel_network:
+    driver: bridge
